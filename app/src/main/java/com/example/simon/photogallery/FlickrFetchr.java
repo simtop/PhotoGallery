@@ -58,7 +58,7 @@ public class FlickrFetchr {
 
     }
 
-    public List<GalleryItem> fetchItems() {
+    public List<GalleryItem> fetchItems(int page) {
 
         List<GalleryItem> items = new ArrayList<>();
 
@@ -69,7 +69,7 @@ public class FlickrFetchr {
                     .appendQueryParameter("api_key", API_KEY)
                     .appendQueryParameter("format", "json")
                     .appendQueryParameter("nojsoncallback", "1")
-                    //.appendQueryParameter("page", Integer.toString(1))
+                    .appendQueryParameter("page", Integer.toString(page))
                     .appendQueryParameter("extras", "url_s")
                     .build().toString();
             String jsonString = getUrlString(url);

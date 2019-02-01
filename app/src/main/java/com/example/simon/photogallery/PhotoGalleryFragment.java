@@ -8,10 +8,13 @@ import android.support.v4.app.Fragment;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -21,9 +24,13 @@ import java.util.List;
 public class PhotoGalleryFragment extends Fragment {
 
     private static final String TAG = "PhotoGalleryFragment";
+    private static int numberOfColumns = 3;   //default number
+    private static final int COLUMN_CONSTANT = 360;
 
     private RecyclerView mRecyclerView;
+    private GridLayoutManager mGridLayoutManager;
     private List<GalleryItem> mItems = new ArrayList<>();
+    private int currentPage = 1;
 
     public static PhotoGalleryFragment newInstance() {
         return new PhotoGalleryFragment();
@@ -34,7 +41,7 @@ public class PhotoGalleryFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setRetainInstance(true);
-        new FetchItemsTask().execute();
+        new FetchItemsTask().execute(currentPage);
     }
 
     @Nullable
@@ -43,7 +50,39 @@ public class PhotoGalleryFragment extends Fragment {
                              @Nullable Bundle savedInstanceState) {
         View v = inflater.inflate(R.layout.fragment_photo_gallery, container, false);
         mRecyclerView = v.findViewById(R.id.photo_recycler_view);
-        mRecyclerView.setLayoutManager(new GridLayoutManager(getActivity(), 3));
+
+        mRecyclerView.getViewTreeObserver().addOnGlobalLayoutListener
+                (new ViewTreeObserver.OnGlobalLayoutListener() {
+                    @Override
+                    public void onGlobalLayout() {
+                        int width = mRecyclerView.getMeasuredWidth();
+                        numberOfColumns = Math.round(width / COLUMN_CONSTANT);
+                        mGridLayoutManager.setSpanCount(numberOfColumns);
+                    }
+                });
+
+        mGridLayoutManager = new GridLayoutManager(getActivity(), numberOfColumns);
+
+        mRecyclerView.setLayoutManager(mGridLayoutManager);
+
+        //mRecyclerView.setLayoutManager(new GridLayoutManager(getActivity(), numberOfColumns));
+
+        mRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
+                super.onScrollStateChanged(recyclerView, newState);
+            }
+
+            @Override
+            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                super.onScrolled(recyclerView, dx, dy);
+                if (!recyclerView.canScrollVertically(1)) {
+                    new FetchItemsTask().execute(currentPage);
+                     currentPage++;
+                }
+            }
+        });
+
 
         setupAdapter();
 
@@ -100,17 +139,18 @@ public class PhotoGalleryFragment extends Fragment {
         }
     }
 
-    private class FetchItemsTask extends AsyncTask<Void, Void, List<GalleryItem>> {
+    private class FetchItemsTask extends AsyncTask<Integer, Void, List<GalleryItem>> {
         @Override
-        protected List<GalleryItem> doInBackground(Void... params) {
-            return new FlickrFetchr().fetchItems();
+        protected List<GalleryItem> doInBackground(Integer... params) {
+            return new FlickrFetchr().fetchItems(currentPage);
         }
 
         @Override
         protected void onPostExecute(List<GalleryItem> items) {
-            mItems = items;
-
+            mItems.addAll(items);
             setupAdapter();
+            //currentPage++;
+            Toast.makeText(getActivity(), "Page" + currentPage, Toast.LENGTH_SHORT).show();
         }
 
 
