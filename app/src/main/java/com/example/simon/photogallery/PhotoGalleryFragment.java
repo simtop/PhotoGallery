@@ -13,16 +13,13 @@ import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
-import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.widget.ImageView;
-import android.widget.TextView;
 import android.widget.Toast;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -38,6 +35,8 @@ public class PhotoGalleryFragment extends Fragment {
     private List<GalleryItem> mItems = new ArrayList<>();
     private int currentPage = 1;
     private int lastPosition = 0;
+    private int firstPosition = 0;
+
 
 
     private ThumbnailDownloader<PhotoHolder> mThumbnailDownloader;
@@ -109,8 +108,16 @@ public class PhotoGalleryFragment extends Fragment {
                     LinearLayoutManager layoutManager = (LinearLayoutManager)mRecyclerView
                             .getLayoutManager();
 
+                    firstPosition = layoutManager.findFirstVisibleItemPosition();
                     lastPosition = layoutManager.findLastVisibleItemPosition();
                     new FetchItemsTask().execute(currentPage);
+                }
+                int top = (firstPosition > 10) ? firstPosition - 10 : 0;
+                int bottom = lastPosition > mItems.size() - 11 ?
+                        mItems.size() : lastPosition + 10;
+
+                for (int i = top; i < bottom; i++) {
+                    mThumbnailDownloader.queueThumbnailCache(mItems.get(i).getUrl());
                 }
             }
         });
@@ -184,7 +191,7 @@ public class PhotoGalleryFragment extends Fragment {
 
             GalleryItem galleryItem = mGalleryItems.get(position);
             //photoHolder.bindGalleryItem(galleryItem);
-            Drawable placeholder = getResources().getDrawable(R.drawable.bill_up_close);
+            Drawable placeholder = getResources().getDrawable(R.drawable.sunrise);
             photoHolder.bindDrawable(placeholder);
 
             mThumbnailDownloader.queueThumbnail(photoHolder, galleryItem.getUrl());
@@ -207,6 +214,7 @@ public class PhotoGalleryFragment extends Fragment {
         @Override
         protected void onPostExecute(List<GalleryItem> items) {
             mItems.addAll(items);
+            mThumbnailDownloader.clearMemoryCache();
             setupAdapter();
             //currentPage++;
 
