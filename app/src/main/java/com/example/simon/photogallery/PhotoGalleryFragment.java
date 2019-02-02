@@ -10,6 +10,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.GridLayoutManager;
+import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.util.TypedValue;
@@ -36,6 +37,8 @@ public class PhotoGalleryFragment extends Fragment {
     private GridLayoutManager mGridLayoutManager;
     private List<GalleryItem> mItems = new ArrayList<>();
     private int currentPage = 1;
+    private int lastPosition = 0;
+
 
     private ThumbnailDownloader<PhotoHolder> mThumbnailDownloader;
 
@@ -102,12 +105,15 @@ public class PhotoGalleryFragment extends Fragment {
             public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
                 super.onScrolled(recyclerView, dx, dy);
                 if (!recyclerView.canScrollVertically(1)) {
-                    new FetchItemsTask().execute(currentPage);
                     currentPage++;
+                    LinearLayoutManager layoutManager = (LinearLayoutManager)mRecyclerView
+                            .getLayoutManager();
+
+                    lastPosition = layoutManager.findLastVisibleItemPosition();
+                    new FetchItemsTask().execute(currentPage);
                 }
             }
         });
-
 
         setupAdapter();
 
@@ -134,7 +140,7 @@ public class PhotoGalleryFragment extends Fragment {
 
         if (isAdded()) {
             mRecyclerView.setAdapter(new PhotoAdapter(mItems));
-
+            mRecyclerView.scrollToPosition(lastPosition);
         }
     }
 
@@ -203,6 +209,7 @@ public class PhotoGalleryFragment extends Fragment {
             mItems.addAll(items);
             setupAdapter();
             //currentPage++;
+
             Toast.makeText(getActivity(), "Page" + currentPage, Toast.LENGTH_SHORT).show();
         }
 
