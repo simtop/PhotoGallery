@@ -1,5 +1,6 @@
 package com.example.simon.photogallery;
 
+import android.app.Activity;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
@@ -21,6 +22,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.Toast;
@@ -164,10 +166,11 @@ public class PhotoGalleryFragment extends Fragment {
         final SearchView searchView = (SearchView) searchItem.getActionView();
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
-
             public boolean onQueryTextSubmit(String s) {
                 Log.d(TAG, "QueryTextSubmit: " + s);
                 QueryPreferences.setStoredQuery(getActivity(), s);
+                hideKeyboard(getActivity());
+
                 updateItems();
 
                 return true;
@@ -277,6 +280,16 @@ public class PhotoGalleryFragment extends Fragment {
             return mGalleryItems.size();
 
         }
+    }
+
+    public static void hideKeyboard(Activity activity) {
+        InputMethodManager imm = (InputMethodManager) activity
+                .getSystemService(Activity.INPUT_METHOD_SERVICE);
+        View view = activity.getCurrentFocus();
+        if (view == null) {
+            view = new View(activity);
+        }
+        imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
     }
 
     private class FetchItemsTask extends AsyncTask<Integer, Void, List<GalleryItem>> {
