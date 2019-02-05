@@ -97,7 +97,6 @@ public class ThumbnailDownloader<T> extends HandlerThread {
         } else {
             mRequestMap.put(target, url);
             mRequestHandler.obtainMessage(MESSAGE_DOWNLOAD, target)
-
                     .sendToTarget();
         }
 
