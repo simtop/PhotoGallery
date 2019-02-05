@@ -1,6 +1,7 @@
 package com.example.simon.photogallery;
 
 import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -8,6 +9,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.WebChromeClient;
+import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.ProgressBar;
@@ -63,9 +65,27 @@ public class PhotoPageFragment extends VisibleFragment {
             }
         });
 
-        mWebView.setWebViewClient(new
+        mWebView.setWebViewClient(new WebViewClient(){
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
 
-                WebViewClient());
+                Uri uri = null;
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+                    uri = request.getUrl();
+
+                if(uri.getScheme().equals("http")|| uri.getScheme().equals("https")) {
+                    return false;
+                }else{
+                    Intent i = new Intent(Intent.ACTION_VIEW,uri);
+                    startActivity(i);
+                    return true;
+                }
+                }
+                else{
+                    return false;
+                }
+            }
+        });
         mWebView.loadUrl(mUri.toString());
         return v;
     }

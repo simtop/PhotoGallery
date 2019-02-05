@@ -131,4 +131,13 @@ public class PollService extends IntentService {
 
     }
 
+    @Override
+    public void onCreate() {
+        super.onCreate();
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+    }
 }
