@@ -4,11 +4,14 @@ import android.app.Activity;
 import android.app.AlarmManager;
 import android.app.IntentService;
 import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.net.ConnectivityManager;
+import android.os.Build;
 import android.os.SystemClock;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationManagerCompat;
@@ -85,27 +88,39 @@ public class PollService extends IntentService {
         } else {
             Log.i(TAG, "Got a new result: " + resultId);
 
+            String CHANNEL_ID = "channel_1";
             Resources resources = getResources();
-
             Intent i = PhotoGalleryActivity.newIntent(this);
             PendingIntent pi = PendingIntent.getActivity(this, 0, i, 0);
-            Notification notification = new NotificationCompat.Builder(this,"default")
+
+            NotificationManager mNotificationManager =
+                    (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+
+            NotificationChannel mChannel;
+            int importance = NotificationManager.IMPORTANCE_DEFAULT;
+
+            NotificationCompat.Builder builder = new NotificationCompat.Builder(this,CHANNEL_ID)
                     .setTicker(resources.getString(R.string.new_pictures_title))
                     .setSmallIcon(android.R.drawable.ic_menu_report_image)
                     .setContentTitle(resources.getString(R.string.new_pictures_title))
                     .setContentText(resources.getString(R.string.new_pictures_text))
-                    .setContentIntent(pi)
-                    .setAutoCancel(true)
-                    .build();
+                    .setContentIntent(pi);
 
-            /*NotificationManagerCompat notificationManager =
-                    NotificationManagerCompat.from(this);
-            notificationManager.notify(0, notification);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                mChannel = new NotificationChannel(CHANNEL_ID, this.getString(R.string.app_name), importance);
+                // Configure the notification channel.
+                mChannel.setDescription("notification");
+                mNotificationManager.createNotificationChannel(mChannel);
+            } else {
+                builder.setContentTitle(resources.getString(R.string.new_pictures_title))
+                        .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                        .setAutoCancel(true);
+            }
 
-            sendBroadcast(new Intent(ACTION_SHOW_NOTIFICATION),PERM_PRIVATE);
-            */
+            //builder.setChannelId(CHANNEL_ID);
+            //mNotificationManager.notify(0, builder.build());
 
-            showBackgroundNotification(0, notification);
+            showBackgroundNotification(0, builder.build());
         }
         QueryPreferences.setLastResultId(this, resultId);
 
@@ -129,15 +144,5 @@ public class PollService extends IntentService {
                 cm.getActiveNetworkInfo().isConnected();
         return isNetworkConnected;
 
-    }
-
-    @Override
-    public void onCreate() {
-        super.onCreate();
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
     }
 }
